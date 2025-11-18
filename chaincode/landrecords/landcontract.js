@@ -42,13 +42,17 @@ class LandRecordContract extends Contract {
             from_user: fromUser,
             to_user: assignedTo,
             action: newStatus,
-            remarks: remarks
+            remarks: remarks,
+            ipfsHash: "randomIPFSHashxxxxxxxxxxxxxxxx",
+            transactionId: "ranomTfrftgyuhi57689678900"
         };
     
         if (!land.history) {
             land.history = [];
         }
         land.history.push(entry);
+        land.ipfsHash = entry.ipfsHash;
+        land.transactionId = entry.transactionId;
     
         await ctx.stub.putState(receipt_number, Buffer.from(JSON.stringify(land)));
         return `Land request ${receipt_number} updated with status ${newStatus}`;

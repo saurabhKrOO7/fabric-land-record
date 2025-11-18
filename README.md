@@ -1,167 +1,178 @@
-# 🧾 Land Record Management System — Complete Setup Guide (Fabric + API + Django)
+# 🏛️ Land Record Management System
+
+A blockchain-powered workflow system for secure, tamper-proof land records using **Hyperledger Fabric**, **Node.js**, **Django**, and **IPFS (Pinata)**. The platform creates immutable land data, tracks approval workflow, and stores documents securely off-chain.
 
 ---
 
-## 📥 0. Clone the Project Repository
+## 📌 Features
 
-First, clone your GitHub project repository:
-
-```bash
-git clone https://github.com/abojha/fabric-land-records
-cd land-record-blockchain
-```
-
-### Install Prerequisites
-
-Make sure the following are installed:
-
-```bash
-sudo apt update
-sudo apt install curl docker.io docker-compose git npm nodejs python3 python3-pip jq -y
-```
-
-### ✅ Check Versions
-
-Ensure you're running compatible versions:
-
-```bash
-node -v          # Should be >= 14.x
-npm -v           # Should be >= 6.x
-docker -v        # Should be >= 20.x
-docker-compose -v  # Should be >= 1.25.x
-python3 --version
-```
-
-If `node` is not available after installing `nodejs`, create an alias:
-
-```bash
-sudo ln -s /usr/bin/nodejs /usr/bin/node
-```
+- 🔐 Blockchain-secured land record lifecycle
+- 📜 Immutable request & workflow history
+- 🗃️ IPFS-based decentralized document storage
+- 🌐 Node.js RESTful API integrated with Fabric SDK
+- 🖥️ Django-powered web application for users & officials
+- 👮 Role-based approval workflow (Clerk → Superintendent → Final Approval)
 
 ---
 
-## 📦 1. Download `fabric-samples` and Fabric Binaries
+## 📁 Project Structure
 
-The project expects the standard Hyperledger `fabric-samples` folder for network setup and testing.
-
-```bash
-# Clone fabric-samples
-git clone https://github.com/hyperledger/fabric-samples.git
-cd fabric-samples
-git checkout v2.5.0
-
-# Download Fabric binaries
-wget https://github.com/hyperledger/fabric/releases/download/v2.5.0/hyperledger-fabric-linux-amd64-2.5.0.tar.gz
-wget https://github.com/hyperledger/fabric-ca/releases/download/v1.5.6/hyperledger-fabric-ca-linux-amd64-1.5.6.tar.gz
-
-# Extract the binaries
-tar -xvzf hyperledger-fabric-linux-amd64-2.5.0.tar.gz
-tar -xvzf hyperledger-fabric-ca-linux-amd64-1.5.6.tar.gz
 ```
 
-Ensure the `bin/` and `config/` directories are now available in `fabric-samples/`.
+fabric-land-record/
+│
+├── fabric-samples/                # Hyperledger Fabric binaries & test network
+├── fabric-api/                    # Node.js backend + Fabric API
+│   ├── api.js
+│   ├── setup.sh
+│   └── package.json
+│
+└── myproject/                     # Django Frontend Web App
+├── manage.py
+├── requirements.txt
+└── .env                       # (to be created manually)
+
+````
 
 ---
 
-## 🔁 2. Bring Up Fabric Network
+## ⚙️ Prerequisites
 
-From your **main project directory**:
+Ensure the following are installed:
 
+- Docker & Docker Compose  
+- Node.js 14+  
+- Python 3.8+  
+- Git  
+- jq (optional but useful)
+
+---
+
+# 🚀 Setup Instructions
+
+## 1️⃣ Backend — Blockchain & Fabric API
+
+### Step 1: Start Hyperledger Network
 ```bash
 source network_up.sh
-```
+````
 
-This script:
-
-- Brings down any existing network
-- Brings up new Fabric network using CAs
-- Creates `mychannel`
-- Joins Org1 & Org2
-- Sets anchor peers
-- Deploys chaincode from `../chaincode/landrecords`
-- Copies connection profile to API folder
-- Clears and re-enrolls admin in wallet
-
----
-
-## 🧤 3. Set Org1 CLI Environment
-
-In your **main project directory**:
+### Step 2: Move to API Directory
 
 ```bash
-source setOrg1.sh
-```
-
-This sets:
-
-- TLS cert paths
-- Peer/Orderer MSP env
-- Orderer CA, Fabric bin in PATH
-
----
-
-## 🌐 4. Setup Fabric API Server
-
-In new Termina and Inside fabric-api:
-
-```bash
+cd ../..
 cd fabric-api
+```
+
+### Step 3: Install Dependencies
+
+```bash
 npm install
+```
+
+### Step 4: Edit `setup.sh` and add these lines
+
+```bash
+export CORE_PEER_LOCALMSPID="Org1MSP"
+export CORE_PEER_TLS_ROOTCERT_FILE=/Users/saurabhkumar/Documents/fabric-land-record/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt
+export CORE_PEER_MSPCONFIGPATH=/Users/saurabhkumar/Documents/fabric-land-record/fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp
+export CORE_PEER_ADDRESS=localhost:7051
+export FABRIC_CFG_PATH=/Users/saurabhkumar/Documents/fabric-land-record/config
+```
+
+| Variable                      | Description                             |
+| ----------------------------- | --------------------------------------- |
+| `CORE_PEER_LOCALMSPID`        | Sets active organization (Org1)         |
+| `CORE_PEER_TLS_ROOTCERT_FILE` | Peer TLS certificate path               |
+| `CORE_PEER_MSPCONFIGPATH`     | Admin identity for signing transactions |
+| `CORE_PEER_ADDRESS`           | Peer endpoint                           |
+| `FABRIC_CFG_PATH`             | Fabric config directory                 |
+
+### Step 5: Make File Executable
+
+```bash
+chmod +x setup.sh
+```
+
+### Step 6: Load Variables
+
+```bash
 source setup.sh
 ```
 
-This:
-
-- Deletes old `wallet/`
-- Copies latest `connection-org1.json`
-- Enrolls admin via `enrollAdmin.js`
-
----
-
-## 🚀 5. Start the Fabric API Server
+### Step 7: Start API Server
 
 ```bash
 node api.js
 ```
 
-Visit: [http://localhost:3000](http://localhost:3000/)
+Backend runs at → `http://localhost:3000/`
 
 ---
 
-## 🖥️ 6. Run Django Web Application
+## 2️⃣ Frontend — Django Web Application
 
-In a new terminal:
+### Step 1: Move to Frontend Directory
 
 ```bash
 cd myproject
-python3 -m venv myenv           # Create virtual environment (if not already created)
-source myenv/bin/activate       # Activate virtual environment
-pip install -r requirements.txt # Install dependencies
-python manage.py runserver      # Start Django development server
 ```
 
-Visit: [http://127.0.0.1:8000](http://127.0.0.1:8000/)
+### Step 2: Create Virtual Environment
 
-Supports:
+```bash
+python3 -m venv myenv
+```
 
-- Citizen & official login
-- Land request & workflow
-- Blockchain updates via signals
+### Step 3: Activate Environment
+
+```bash
+source myenv/bin/activate
+```
+
+### Step 4: Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### Step 5: Create `.env` File
+
+```
+EMAIL_HOST_USER=your_email
+EMAIL_HOST_PASSWORD=your_password
+PINATA_API_KEY=your_pinata_api_key
+PINATA_SECRET_API_KEY=your_pinata_secret_key
+NODE_ENV=development
+```
+
+### Step 6: Apply Database Migrations
+
+```bash
+python manage.py migrate
+```
+
+### Step 7: Run the Server
+
+```bash
+python manage.py runserver
+```
+
+Frontend runs at → `http://127.0.0.1:8000/`
 
 ---
 
-## 📬 7. Blockchain Sync via Django Signals
+# 3️⃣ Blockchain Data & Chaincode Operations
 
-`signals.py` triggers blockchain writes:
+### Step 1: Set Org1 Context
 
-- `createLandRequest()` for new land
-- `updateLandStatus()` for forwarding/status changes
+```bash
+source setOrg1.sh
+```
 
 ---
 
-## 🔐 Sample Peer CLI Commands (Run after `source setOrg1.sh`)
-
-📦 **Create Land Request**
+### 🏗️ Create Land Request
 
 ```bash
 peer chaincode invoke \
@@ -175,7 +186,7 @@ peer chaincode invoke \
   -c '{"Args":["createLandRequest", "12345", "{\"owner\":\"John Doe\",\"area\":\"500 sqft\",\"location\":\"Sector 21\",\"status\":\"Pending\",\"currently_with\":\"clerk\"}"]}'
 ```
 
-📖 **Read a Land Request**
+### 🔍 Read Specific Record
 
 ```bash
 peer chaincode query \
@@ -184,7 +195,7 @@ peer chaincode query \
   -c '{"Args":["readLandRequest", "12345"]}'
 ```
 
-🔄 **Update Land Status**
+### 🔁 Update Record Status
 
 ```bash
 peer chaincode invoke \
@@ -198,7 +209,7 @@ peer chaincode invoke \
   -c '{"Args":["updateLandStatus", "12345", "Approved", "superintendent", "Verified documents", "clerk", "2025-03-31T23:30:00Z"]}'
 ```
 
-📋 **Get All Land Requests**
+### 📋 Query All Records
 
 ```bash
 peer chaincode query \
@@ -209,9 +220,9 @@ peer chaincode query \
 
 ---
 
-## 🌐 API Endpoints (via curl)
+# 🌐 API Endpoints
 
-📦 **Create Land Request**
+### Create Land Request
 
 ```bash
 curl -X POST http://localhost:3000/api/landrequests/create \
@@ -229,40 +240,31 @@ curl -X POST http://localhost:3000/api/landrequests/create \
   }'
 ```
 
-🔍 **Get All Land Requests**
+### Fetch All Records
 
 ```bash
 curl http://localhost:3000/api/landrequests | jq
 ```
 
-🔄 **Update Land Request Status**
+---
 
-```bash
-curl -X POST http://localhost:3000/api/landrequests/update \
-  -H "Content-Type: application/json" \
-  -d '{
-    "receiptNumber": "12345",
-    "newStatus": "Approved",
-    "assignedTo": "superintendent",
-    "remarks": "Verified documents",
-    "fromUser": "clerk",
-    "timestamp": "2025-03-31T23:30:00Z"
-  }'
-```
+## 🛠️ Troubleshooting
+
+| Issue              | Check/Fix                               |             |
+| ------------------ | --------------------------------------- | ----------- |
+| TLS/Cert errors    | Verify certificate paths                |             |
+| API not connecting | Re-run `source setup.sh`                |             |
+| Peer not running   | `docker ps                              | grep peer0` |
+| Wallet issues      | Delete `fabric-api/wallet/` and restart |             |
 
 ---
 
-## 📦 Final Project Structure Summary
+## 🤝 Contributing
 
-| 🔧 Component        | 📁 Location                                     | 📝 Purpose                                |
-|--------------------|-------------------------------------------------|--------------------------------------------|
-| Fabric Network     | `network_up.sh`                                 | Full chaincode deploy and setup            |
-| CLI Config         | `setOrg1.sh`                                    | Environment for peer CLI commands         |
-| Chaincode          | `fabric-samples/chaincode/landrecords`         | Smart contract logic                      |
-| API Setup Script   | `fabric-api/setup.sh`                           | Admin re-enrollment + wallet setup        |
-| Fabric API Server  | `fabric-api/api.js`                             | REST API to interact with chaincode       |
-| Admin Wallet       | `fabric-api/wallet/`                            | Stores enrolled identity                  |
-| Django Web App     | `myproject/`                                    | UI for citizens & officials               |
-| Signal Hooks       | `myproject/myapp/signals.py`                    | Trigger API from database events          |
+Pull requests & feature enhancements are welcome.
 
 ---
+
+## 📄 License
+
+MIT License
